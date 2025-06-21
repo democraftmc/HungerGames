@@ -122,6 +122,8 @@ spectate:
   not-spectator: "&cYou are not a spectator!"
   gui-message: "&bTeleport to player"
   message: "&dSpectate players with /hg spectate"
+  leave-item-name: "&cLeave the Match"
+  leave-item-lore: "&7Use right clic to go back to lobby."
 
 startgame:
   min-players: "&cThere must be at least &b{0}&c players to start the game!"

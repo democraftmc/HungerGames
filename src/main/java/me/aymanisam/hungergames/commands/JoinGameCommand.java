@@ -4,13 +4,15 @@ import me.aymanisam.hungergames.HungerGames;
 import me.aymanisam.hungergames.handlers.*;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
+import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.WorldCreator;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
-import org.jetbrains.annotations.NotNull;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -18,6 +20,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static me.aymanisam.hungergames.HungerGames.gameStarted;
+import static me.aymanisam.hungergames.handlers.TeamsHandler.customTeams;
 import static me.aymanisam.hungergames.HungerGames.*;
 import static me.aymanisam.hungergames.handlers.GameSequenceHandler.startingPlayers;
 
@@ -36,6 +40,18 @@ public class JoinGameCommand implements CommandExecutor {
 	    this.configHandler = plugin.getConfigHandler();
 	    this.scoreBoardHandler = scoreBoardHandler;
 	    this.arenaHandler = new ArenaHandler(plugin, langHandler);
+    }
+
+    public static void giveLeaveItem(Player player, LangHandler langHandler) {
+        ItemStack leaveItem = new ItemStack(Material.RED_BED);
+        ItemMeta meta = leaveItem.getItemMeta();
+        assert meta != null;
+        meta.setDisplayName(langHandler.getMessage(player, "spectate.leave-item-name"));
+        List<String> lore = new ArrayList<>();
+        lore.add(langHandler.getMessage(player, "spectate.leave-item-lore"));
+        meta.setLore(lore);
+        leaveItem.setItemMeta(meta);
+        player.getInventory().setItem(8, leaveItem);
     }
 
     @Override
@@ -123,6 +139,7 @@ public class JoinGameCommand implements CommandExecutor {
             }
             player.setGameMode(GameMode.SPECTATOR);
             player.sendMessage(langHandler.getMessage(player, "spectate.spectating-player"));
+             giveLeaveItem(player, langHandler);
         }
     }
 

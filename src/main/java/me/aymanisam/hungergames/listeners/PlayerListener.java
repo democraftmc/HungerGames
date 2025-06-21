@@ -10,17 +10,20 @@ import org.bukkit.WorldCreator;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.block.Action;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
+import org.bukkit.inventory.ItemStack;
 
 import java.sql.SQLException;
 import java.util.*;
 import java.util.logging.Level;
 
 import static me.aymanisam.hungergames.HungerGames.*;
+import static me.aymanisam.hungergames.commands.JoinGameCommand.giveLeaveItem;
 import static me.aymanisam.hungergames.handlers.GameSequenceHandler.playerPlacements;
 import static me.aymanisam.hungergames.handlers.GameSequenceHandler.playersAlive;
 import static me.aymanisam.hungergames.handlers.TeamsHandler.teams;
@@ -262,6 +265,7 @@ public class PlayerListener implements Listener {
                 player.sendMessage(langHandler.getMessage(player, "spectate.message"));
                 Map<Player, Location> worldDeathLocations = deathLocations.computeIfAbsent(world.getName(), k -> new HashMap<>());
                 worldDeathLocations.put(player, player.getLocation());
+                giveLeaveItem(player, langHandler);
             }
         }
 
@@ -341,6 +345,32 @@ public class PlayerListener implements Listener {
     @EventHandler
     public void onPlayerInteract(PlayerInteractEvent event) {
         Player player = event.getPlayer();
+        ItemStack item = event.getItem();
+
+        if (player.getGameMode() == GameMode.SPECTATOR && item != null && item.getType() == Material.RED_BED) {
+            if (item.hasItemMeta() && Objects.requireNonNull(item.getItemMeta()).hasDisplayName() && item.getItemMeta().getDisplayName().equals(langHandler.getMessage(player, "spectate.leave-item-name"))) {
+                if (event.getAction() == Action.RIGHT_CLICK_AIR || event.getAction() == Action.RIGHT_CLICK_BLOCK) {
+                    if (configHandler.getPluginSettings().getBoolean("join-first-available-arena")) {
+                        player.kickPlayer(langHandler.getMessage(player, "spectate.leave-kick"));
+                        return;
+                    } else {
+                        String lobbyWorldName = (String) configHandler.getPluginSettings().get("lobby-world");
+                        assert lobbyWorldName != null;
+                        World lobbyWorld = Bukkit.getWorld(lobbyWorldName);
+                        if (lobbyWorld != null) {
+                            resetPlayerHandler.resetPlayer(player, player.getWorld());
+                            player.teleport(lobbyWorld.getSpawnLocation());
+                            player.sendMessage(langHandler.getMessage(player, "game.lobby"));
+                        } else {
+                            player.sendMessage(langHandler.getMessage(player, "game.no-lobby"));
+                        }
+                        event.setCancelled(true);
+                        return;
+                    }
+                }
+            }
+        }
+
         if (player.getGameMode() == GameMode.SPECTATOR) {
             if (event.getClickedBlock() != null) {
                 Material blockType = event.getClickedBlock().getType();

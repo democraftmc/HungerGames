@@ -121,6 +121,8 @@ spectate:
   not-spectator: "&cVous n'êtes pas un spectateur !"
   gui-message: "&bTéléporter vers un joueur"
   message: "&dSpectez les joueurs avec /hg spectate"
+  leave-item-name: "&cQuitter l'arène"
+  leave-item-lore: "&7Faites un clic droit pour retourner au lobby."
 
 startgame:
   min-players: "&cIl doit y avoir au moins &b{0}&c joueurs pour commencer le jeu !"
