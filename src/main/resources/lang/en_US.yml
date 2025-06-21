@@ -113,6 +113,7 @@ setspawn:
   game-started: "&cGame has already started."
   joined-message: "&a{0} &7has joined &2[{1}/{2}]"
   spawn-filled: "&cAll spawn points are currently occupied!"
+  game-over-kick: "&cThe game is over, you have been kicked from the arena."
 
 spectate:
   spectating-player: "&dYou are now spectating"

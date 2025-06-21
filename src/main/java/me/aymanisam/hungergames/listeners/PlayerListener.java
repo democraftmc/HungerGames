@@ -262,9 +262,32 @@ public class PlayerListener implements Listener {
         removeFromTeam(player);
         removeBossBar(player);
 
+        boolean gameHasEnded = false;
+        if (gameStarted.getOrDefault(world.getName(), false)) {
+            boolean isTeamGame = configHandler.getWorldConfig(world).getInt("players-per-team") > 1;
+            if (isTeamGame) {
+                List<List<Player>> worldTeamsAlive = teamsAlive.get(world.getName());
+                if (worldTeamsAlive != null && worldTeamsAlive.size() <= 1) {
+                    gameHasEnded = true;
+                }
+            } else {
+                if (worldPlayersAlive.size() <= 1) {
+                    gameHasEnded = true;
+                }
+            }
+        }
+
+        if (gameHasEnded) {
+            Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                if (player.isOnline()) {
+                    player.kickPlayer(langHandler.getMessage(player, "game.game-over-kick"));
+                }
+            }, 20L);
+        }
+
         signClickListener.setSignContent(signHandler.loadSignLocations());
 
-        if (configHandler.getPluginSettings().getBoolean("spectating")) {
+        if (!gameHasEnded && configHandler.getPluginSettings().getBoolean("spectating")) {
             if (gameStarted.getOrDefault(world.getName(), false)) {
                 player.setGameMode(GameMode.SPECTATOR);
                 player.sendTitle("", langHandler.getMessage(player, "spectate.spectating-player"), 5, 20, 10);
@@ -356,9 +379,9 @@ public class PlayerListener implements Listener {
         if (player.getGameMode() == GameMode.SPECTATOR && item != null && item.getType() == Material.RED_BED) {
             if (item.hasItemMeta() && Objects.requireNonNull(item.getItemMeta()).hasDisplayName() && item.getItemMeta().getDisplayName().equals(langHandler.getMessage(player, "spectate.leave-item-name"))) {
                 if (event.getAction() == Action.RIGHT_CLICK_AIR || event.getAction() == Action.RIGHT_CLICK_BLOCK) {
+                    event.setCancelled(true);
                     if (configHandler.getPluginSettings().getBoolean("join-first-available-arena")) {
                         player.kickPlayer(langHandler.getMessage(player, "spectate.leave-kick"));
-                        return;
                     } else {
                         String lobbyWorldName = (String) configHandler.getPluginSettings().get("lobby-world");
                         assert lobbyWorldName != null;
@@ -370,9 +393,8 @@ public class PlayerListener implements Listener {
                         } else {
                             player.sendMessage(langHandler.getMessage(player, "game.no-lobby"));
                         }
-                        event.setCancelled(true);
-                        return;
                     }
+                    return;
                 }
             }
         }

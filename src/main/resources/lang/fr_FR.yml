@@ -66,6 +66,7 @@ game:
   worldsaved: "&aLe monde &b{0} &aa été sauvegardé !"
   not-team: "&cCette commande ne peut pas être exécutée dans un jeu solo"
   placed: "&bVous avez terminé à la {0}ᵉ place"
+  game-over-kick: "La partie est terminée. Merci d'avoir joué !"
 
 teleport:
   no-player: "&cVeuillez entrer un joueur à téléporter ou 'all' pour téléporter tout le monde !"
