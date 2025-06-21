@@ -2,28 +2,29 @@ package me.aymanisam.hungergames.listeners;
 
 import me.aymanisam.hungergames.HungerGames;
 import me.aymanisam.hungergames.handlers.*;
-import org.bukkit.*;
-import org.bukkit.block.Block;
-import org.bukkit.entity.*;
+import org.bukkit.Bukkit;
+import org.bukkit.GameMode;
+import org.bukkit.Location;
+import org.bukkit.World;
+import org.bukkit.WorldCreator;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.block.Action;
-import org.bukkit.event.entity.*;
-import org.bukkit.event.player.*;
-import org.bukkit.inventory.ItemStack;
-import org.bukkit.potion.PotionEffect;
-import org.bukkit.potion.PotionEffectType;
+import org.bukkit.event.entity.PlayerDeathEvent;
+import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerMoveEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.event.player.PlayerRespawnEvent;
 
 import java.sql.SQLException;
 import java.util.*;
 import java.util.logging.Level;
 
 import static me.aymanisam.hungergames.HungerGames.*;
-import static me.aymanisam.hungergames.handlers.GameSequenceHandler.*;
+import static me.aymanisam.hungergames.handlers.GameSequenceHandler.playerPlacements;
+import static me.aymanisam.hungergames.handlers.GameSequenceHandler.playersAlive;
 import static me.aymanisam.hungergames.handlers.TeamsHandler.teams;
 import static me.aymanisam.hungergames.handlers.TeamsHandler.teamsAlive;
-import static org.bukkit.event.entity.EntityDamageEvent.DamageCause.PROJECTILE;
-import static org.bukkit.event.entity.EntityDamageEvent.DamageCause.WORLD_BORDER;
 
 public class PlayerListener implements Listener {
     private final HungerGames plugin;
@@ -32,10 +33,11 @@ public class PlayerListener implements Listener {
     private final ConfigHandler configHandler;
     private final SignHandler signHandler;
     private final SignClickListener signClickListener;
-	private final DatabaseHandler databaseHandler;
+    private final DatabaseHandler databaseHandler;
     private final ResetPlayerHandler resetPlayerHandler;
+    private final ArenaHandler arenaHandler;
 
-	private final Map<String, Map<Player, Location>> deathLocations = new HashMap<>();
+    private final Map<String, Map<Player, Location>> deathLocations = new HashMap<>();
     private final Map<Player, Set<Player>> playerDamagers = new HashMap<>();
     public static final Map<String, Map<Player, Integer>> playerKills = new HashMap<>();
 
@@ -44,10 +46,10 @@ public class PlayerListener implements Listener {
         this.plugin = plugin;
         this.langHandler = langHandler;
         this.configHandler = plugin.getConfigHandler();
-	    ArenaHandler arenaHandler = new ArenaHandler(plugin, langHandler);
+        this.arenaHandler = new ArenaHandler(plugin, langHandler);
         this.signHandler = new SignHandler(plugin);
         this.signClickListener = new SignClickListener(plugin, langHandler, setSpawnHandler, arenaHandler, scoreBoardHandler);
-	    this.databaseHandler = new DatabaseHandler(plugin);
+        this.databaseHandler = new DatabaseHandler(plugin);
         this.resetPlayerHandler = new ResetPlayerHandler();
     }
 
@@ -141,14 +143,6 @@ public class PlayerListener implements Listener {
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
-        String lobbyWorldName = (String) configHandler.getPluginSettings().get("lobby-world");
-        assert lobbyWorldName != null;
-        World lobbyWorld = Bukkit.getWorld(lobbyWorldName);
-        if (lobbyWorld != null) {
-            player.teleport(lobbyWorld.getSpawnLocation());
-        } else {
-            plugin.getLogger().log(Level.SEVERE, "Could not find lobbyWorld [ " + lobbyWorldName + "]");
-        }
         event.setJoinMessage(null);
 
         if (configHandler.getPluginSettings().getBoolean("database.enabled")) {
@@ -163,6 +157,51 @@ public class PlayerListener implements Listener {
             } catch (SQLException e) {
                 plugin.getLogger().log(Level.SEVERE, e.toString());
             }
+        }
+
+        if (configHandler.getPluginSettings().getBoolean("join-first-available-arena")) {
+            for (String worldName : hgWorldNames) {
+                if (gameStarted.getOrDefault(worldName, false) || gameStarting.getOrDefault(worldName, false)) {
+                    continue;
+                }
+
+                World world = Bukkit.getWorld(worldName);
+                boolean created = false;
+                if (world == null) {
+                    world = Bukkit.createWorld(new WorldCreator(worldName));
+                    if (world == null) {
+                        plugin.getLogger().log(Level.WARNING, "Failed to load world " + worldName + " for auto-join.");
+                        continue;
+                    }
+                    created = true;
+                }
+
+                if (created) {
+                    arenaHandler.loadWorldFiles(world);
+                }
+
+                setSpawnHandler.createSetSpawnConfig(world);
+                List<String> worldSpawnPoints = setSpawnHandler.spawnPoints.get(worldName);
+                if (worldSpawnPoints == null || worldSpawnPoints.isEmpty()) {
+                    continue;
+                }
+
+                Map<String, Player> worldSpawnPointMap = setSpawnHandler.spawnPointMap.computeIfAbsent(worldName, k -> new HashMap<>());
+
+                if (worldSpawnPointMap.size() < worldSpawnPoints.size()) {
+                    setSpawnHandler.teleportPlayerToSpawnpoint(player, world);
+                    return;
+                }
+            }
+        }
+
+        String lobbyWorldName = (String) configHandler.getPluginSettings().get("lobby-world");
+        assert lobbyWorldName != null;
+        World lobbyWorld = Bukkit.getWorld(lobbyWorldName);
+        if (lobbyWorld != null) {
+            player.teleport(lobbyWorld.getSpawnLocation());
+        } else {
+            plugin.getLogger().log(Level.SEVERE, "Could not find lobbyWorld [ " + lobbyWorldName + "]");
         }
     }
 

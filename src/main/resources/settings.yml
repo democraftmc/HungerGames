@@ -1,5 +1,6 @@
 # Lobby world
 lobby-world: "world"
+join-first-available-arena: true
 # Enable tips to let players get displayed tips periodically
 tips: true
 # If enabled, only worlds listed here will be included in HungerGames
