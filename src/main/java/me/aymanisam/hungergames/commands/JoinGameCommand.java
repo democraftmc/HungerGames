@@ -13,6 +13,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -21,7 +22,6 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import static me.aymanisam.hungergames.HungerGames.gameStarted;
-import static me.aymanisam.hungergames.handlers.TeamsHandler.customTeams;
 import static me.aymanisam.hungergames.HungerGames.*;
 import static me.aymanisam.hungergames.handlers.GameSequenceHandler.startingPlayers;
 
