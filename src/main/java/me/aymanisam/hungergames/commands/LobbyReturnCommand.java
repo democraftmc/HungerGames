@@ -57,6 +57,15 @@ public class LobbyReturnCommand implements CommandExecutor {
             return true;
         }
 
+        if (configHandler.getPluginSettings().getBoolean("join-first-available-arena")) {
+            Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                if (player.isOnline()) {
+                    player.kickPlayer(langHandler.getMessage(player, "game.game-over-kick"));
+                }
+            }, 20L);
+            return true;
+        }
+
         String lobbyWorldName = (String) configHandler.getPluginSettings().get("lobby-world");
 
         World world = player.getWorld();

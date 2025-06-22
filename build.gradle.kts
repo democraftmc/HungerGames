@@ -49,11 +49,11 @@ tasks.withType<JavaCompile> {
 }
 
 tasks.shadowJar {
-    archiveFileName.set("Hungergames-$version.jar")
+    archiveFileName.set("HungerGames-$version.jar")
     relocate("org.bstats", "$group.bstats")
     relocate("fr.mrmicky.fastboard", "$group.fastboard")
     archiveClassifier.set("")
-    destinationDirectory.set(file(System.getenv("OUTPUT_DIR")))
+    destinationDirectory.set(file("C:/GitHub/HungerGames/jars"))
 }
 
 tasks.processResources {

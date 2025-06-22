@@ -278,11 +278,13 @@ public class PlayerListener implements Listener {
         }
 
         if (gameHasEnded) {
-            Bukkit.getScheduler().runTaskLater(plugin, () -> {
-                if (player.isOnline()) {
-                    player.kickPlayer(langHandler.getMessage(player, "game.game-over-kick"));
-                }
-            }, 20L);
+            for (Player p : world.getPlayers()) {
+                Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                    if (player.isOnline()) {
+                        player.kickPlayer(langHandler.getMessage(player, "game.game-over-kick"));
+                    }
+                }, 20L);
+            }
         }
 
         signClickListener.setSignContent(signHandler.loadSignLocations());
