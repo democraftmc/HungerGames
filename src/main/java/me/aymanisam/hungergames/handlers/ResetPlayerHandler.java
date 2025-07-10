@@ -10,7 +10,7 @@ import java.util.Objects;
 
 public class ResetPlayerHandler {
     public void resetPlayer(Player player, World world) {
-        player.setGameMode(GameMode.ADVENTURE);
+        player.setGameMode(GameMode.SURVIVAL);
         player.setHealth(20);
         player.setFoodLevel(20);
         player.setSaturation(20);
